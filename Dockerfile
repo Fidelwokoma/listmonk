@@ -1,31 +1,14 @@
-# Use the official Golang image to create a build artifact.
-FROM golang:1.17 AS build
+# Use the official Listmonk image
+FROM listmonk/listmonk:latest
 
-# Set the Current Working Directory inside the container
-WORKDIR /app
+# Set environment variables
+ENV TZ=Etc/UTC
 
-# Copy go mod and sum files
-COPY go.mod go.sum ./
+# Copy the config file
+COPY config.toml /listmonk/config.toml
 
-# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
-RUN go mod download
-
-# Copy the source from the current directory to the Working Directory inside the container
-COPY . .
-
-# Build the Go app
-RUN go build -o listmonk ./cmd
-
-# Start a new stage from scratch
-FROM golang:1.17
-
-WORKDIR /app
-
-# Copy the Pre-built binary file from the previous stage
-COPY --from=build /app/listmonk /app/listmonk
-
-# Expose port 9000 to the outside world
+# Expose port 9000
 EXPOSE 9000
 
-# Command to run the executable
-CMD ["./listmonk", "serve"]
+# Command to run the application
+CMD ["./listmonk", "serve", "--config", "/listmonk/config.toml"]
